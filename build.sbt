@@ -45,11 +45,11 @@ zip <<= (baseDirectory,name,version,assembly,docFiles,zipPath) map {
   (base :File, projName: String, versionName: String, jar: File, docs: Seq[File], out: File) =>
     val origInputs: Seq[(File,String)] =
       //rename jar to non-assembly name to keep consistent with maven
-      ((Seq(jar) x Path.flat) map {e:(File,String) => (e._1,projName + "-" + version + ".jar")}) ++
+      ((Seq(jar) x Path.flat) map {e:(File,String) => (e._1,projName + "-" + versionName + ".jar")}) ++
       (docs x Path.flat)
-  //rebase path to 'hstreamz' in zip. easier way above?
-    val streamzInputs: Seq[(File,String)] = origInputs map { e:(File,String) => (e._1,"hstreamz/" ++ e._2)}
-    IO.zip(streamzInputs, out)
+    //rebase path to 'hstreamz' in zip. easier way above?
+    val hstreamzInputs: Seq[(File,String)] = origInputs map { e:(File,String) => (e._1,"hstreamz/" ++ e._2)}
+    IO.zip(hstreamzInputs, out)
     out
 }
 
