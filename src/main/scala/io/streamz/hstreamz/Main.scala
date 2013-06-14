@@ -39,6 +39,7 @@ case class Config(
   hdfsSrcFile: String = null,
   hdfsDestFile: String = null,
   schema: String = null,
+  key: String = null,
   scripts: String = null,
   srccode: String = null,
   cluster: String = null,
@@ -54,6 +55,7 @@ object Main {
         argOpt("src", "a file or directory on hdfs.") { (v: String, c: Config) => c.copy(hdfsSrcFile = v) },
         argOpt("dest", "an optional destination file on hdfs.") { (v: String, c: Config) => c.copy(hdfsDestFile = v) },
         opt("schema", "describes the csv.") { (v: String, c: Config) => c.copy(schema = v) },
+        opt("key", "the key to route the tuple.") { (v: String, c: Config) => c.copy(key = v) },
         opt("scripts", "the streamz scripts to load.") { (v: String, c: Config) => c.copy(scripts = v) },
         opt("srccode", "the directory or .jar file where streamz scripts are located.") { (v: String, c: Config) => c.copy(srccode = v) },
         opt("cluster", "the streamz cluster to connect to.") { (v: String, c: Config) => c.copy(cluster = v) },
@@ -92,11 +94,11 @@ object Main {
 
     // locate the files on hdfs
     val fs = HdfsExecutor(URI.create(conf.hdfs), conf.hdfsUser)
-    val uris = fs.exec[Array[FileStatus]](LS, conf.hdfsSrcFile).filter(f => !f.isDirectory).map(f => f.getPath.toUri)
+    val uris = fs.exec[Array[FileStatus]](LS, conf.hdfsSrcFile).filter(f => !f.isDir).map(f => f.getPath.toUri)
 
     // create a list of splitters
     val sources = uris.map(uri => fs.exec[Source](Get, uri.toASCIIString))
-    val splitters = StreamSplitters(sources.toList, conf.schema.split(","))
+    val splitters = StreamSplitters(sources.toList, conf.schema.split(","), conf.key)
 
     // create a context
     val ctx = new StreamContext(props, splitters)
@@ -117,6 +119,7 @@ object Main {
     else if (conf.hdfsSrcFile == null) false
     else if (conf.protocol == null) false
     else if (conf.schema == null) false
+    else if (conf.key == null) false
     else if (conf.scripts == null) false
     else if (conf.srccode == null) false
     else true

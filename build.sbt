@@ -27,9 +27,7 @@ libraryDependencies ++= Seq(
    "io.streamz" % "streamz_2.10" % "0.0.1",
    "org.slf4j" % "slf4j-api" % "1.6.4",
    "com.github.scopt"  % "scopt_2.10" % "2.1.0",
-   "org.apache.avro" % "avro" % "1.7.4" % "provided",
-   "org.apache.hadoop" % "hadoop-annotations" % "2.0.0-cdh4.2.0" % "provided",
-   "org.apache.hadoop" % "hadoop-common" % "2.0.0-cdh4.2.0" % "provided" notTransitive()
+   "org.apache.hadoop" % "hadoop-core" % "0.20.2-cdh3u6" % "provided" notTransitive()
 )
 
 //do assembly stuff

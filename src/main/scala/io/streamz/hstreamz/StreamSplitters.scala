@@ -29,13 +29,13 @@ import io.streamz.event.StreamTuple
 // TODO: Handle Avro and Sequence files
 // TODO: Make more flexible. Currently supports csv and uses headers(0) as the route key
 object StreamSplitters {
-  def apply(streams: List[Source], headers: Array[String]) = {
+  def apply(streams: List[Source], headers: Array[String], routeKey: String) = {
     streams.map {
       src => {
         new TextStreamSplitter(src, new InputSplitter[String]{
           def split(in: String) = {
             val map = headers.zip(in.split(',')).toMap
-            Array(StreamTuple("event", map(headers(0)), map))
+            Array(StreamTuple("event", routeKey, map))
           }
         })
       }
