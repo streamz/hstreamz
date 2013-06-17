@@ -38,7 +38,8 @@ case class Config(
   hdfsUser: String = null,
   hdfsSrcFile: String = null,
   hdfsDestFile: String = null,
-  schema: String = null,
+  header: String = null,
+  cut: String = null,
   key: String = null,
   scripts: String = null,
   srccode: String = null,
@@ -54,7 +55,8 @@ object Main {
         opt("user", "the hdfsUser.") { (v: String, c: Config) => c.copy(hdfsUser = v) },
         argOpt("src", "a file or directory on hdfs.") { (v: String, c: Config) => c.copy(hdfsSrcFile = v) },
         argOpt("dest", "an optional destination file on hdfs.") { (v: String, c: Config) => c.copy(hdfsDestFile = v) },
-        opt("schema", "describes the csv.") { (v: String, c: Config) => c.copy(schema = v) },
+        opt("header", "the csv header.") { (v: String, c: Config) => c.copy(header = v) },
+        opt("cut", "comma separated list of fields to include.") { (v: String, c: Config) => c.copy(cut = v) },
         opt("key", "the key to route the tuple.") { (v: String, c: Config) => c.copy(key = v) },
         opt("scripts", "the streamz scripts to load.") { (v: String, c: Config) => c.copy(scripts = v) },
         opt("srccode", "the directory or .jar file where streamz scripts are located.") { (v: String, c: Config) => c.copy(srccode = v) },
@@ -98,7 +100,15 @@ object Main {
 
     // create a list of splitters
     val sources = uris.map(uri => fs.exec[Source](Get, uri.toASCIIString))
-    val splitters = StreamSplitters(sources.toList, conf.schema.split(","), conf.key)
+
+    // create the csv schema and filter
+    val hdr = conf.header.split(",")
+    val cut = conf.cut.split(",")
+
+    require(hdr.length == cut.length || cut.length == 0, "error: header and cut mismatch.")
+
+    val schema = hdr.zipWithIndex.map{ case (e, i) => (e, if (cut.length == 0) i else cut(i).toInt) }
+    val splitters = StreamSplitters(sources.toList, schema.toMap, conf.key)
 
     // create a context
     val ctx = new StreamContext(props, splitters)
@@ -118,7 +128,7 @@ object Main {
     else if (conf.hdfs == null) false
     else if (conf.hdfsSrcFile == null) false
     else if (conf.protocol == null) false
-    else if (conf.schema == null) false
+    else if (conf.header == null) false
     else if (conf.key == null) false
     else if (conf.scripts == null) false
     else if (conf.srccode == null) false
